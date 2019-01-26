@@ -1,3 +1,6 @@
+#--------------------------------------
+# Stage: Compile openssl
+#--------------------------------------
 FROM debian:stretch as openssl
 LABEL maintainer="Matthew Vance"
 
@@ -33,6 +36,10 @@ RUN set -e -x && \
       /var/tmp/* \
       /var/lib/apt/lists/*
 
+
+#--------------------------------------
+# Stage: Compile unbound
+#--------------------------------------
 FROM debian:stretch as unbound
 LABEL maintainer="Matthew Vance"
 
@@ -77,6 +84,9 @@ RUN build_deps="ca-certificates curl gcc libc-dev libevent-dev libexpat1-dev mak
       /var/tmp/* \
       /var/lib/apt/lists/*
 
+#--------------------------------------
+# Stage: Packaging Apps
+#--------------------------------------
 FROM debian:stretch
 LABEL maintainer="Matthew Vance"
 
@@ -106,15 +116,13 @@ RUN set -x && \
       libexpat1 && \
     groupadd _unbound && \
     useradd -g _unbound -s /etc -d /dev/null _unbound && \
-   rm -fr \
+    rm -fr \
       /tmp/* \
       /var/tmp/* \
       /var/lib/apt/lists/*
 
 COPY a-records.conf /opt/unbound/etc/unbound/
 COPY unbound.sh /
-
-RUN chmod +x /unbound.sh
 
 WORKDIR /opt/unbound/
 

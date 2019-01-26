@@ -1,4 +1,7 @@
-FROM debian:stretch as builder
+#--------------------------------------
+# Stage: Compile openssl
+#--------------------------------------
+FROM debian:stretch as openssl
 LABEL maintainer="Matthew Vance"
 
 ENV version_openssl=openssl-1.1.1a \
@@ -33,6 +36,10 @@ RUN set -e -x && \
       /var/tmp/* \
       /var/lib/apt/lists/*
 
+
+#--------------------------------------
+# Stage: Packaging Apps
+#--------------------------------------
 FROM debian:stretch
 LABEL maintainer="Matthew Vance"
 
@@ -40,7 +47,7 @@ EXPOSE 8053/udp
 
 WORKDIR /tmp/src
 
-COPY --from=builder /opt/openssl /opt/openssl
+COPY --from=openssl /opt/openssl /opt/openssl
 
 RUN set -e -x && \
     build_deps="autoconf build-essential dh-autoreconf git libssl-dev libtool-bin libyaml-dev make m4" && \
