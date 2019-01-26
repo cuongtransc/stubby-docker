@@ -1,5 +1,16 @@
-#! /bin/sh
+#! /bin/bash
 
+##################### Handle SIGTERM #####################
+function _term() {
+    printf "%s\n" "Caught terminate signal!"
+
+    kill -SIGTERM $child 2>/dev/null
+    exit 0
+}
+
+trap _term SIGHUP SIGINT SIGTERM SIGQUIT
+
+##################### Start application #####################
 reserved=12582912
 availableMemory=$((1024 * $( (fgrep MemAvailable /proc/meminfo || fgrep MemTotal /proc/meminfo) | sed 's/[^0-9]//g' ) ))
 if [ $availableMemory -le $(($reserved * 2)) ]; then
@@ -96,11 +107,16 @@ remote-control:
 EOT
 fi
 
-mkdir -p /opt/unbound/etc/unbound/dev && \
-cp -a /dev/random /dev/urandom /opt/unbound/etc/unbound/dev/
+mkdir -p /opt/unbound/etc/unbound/dev \
+&& cp -a /dev/random /dev/urandom /opt/unbound/etc/unbound/dev/
 
-mkdir -p -m 700 /opt/unbound/etc/unbound/var && \
-chown _unbound:_unbound /opt/unbound/etc/unbound/var && \
-/opt/unbound/sbin/unbound-anchor -a /opt/unbound/etc/unbound/var/root.key
+mkdir -p -m 700 /opt/unbound/etc/unbound/var \
+&& chown _unbound:_unbound /opt/unbound/etc/unbound/var \
+&& /opt/unbound/sbin/unbound-anchor -a /opt/unbound/etc/unbound/var/root.key
 
-exec /opt/unbound/sbin/unbound -d -c /opt/unbound/etc/unbound/unbound.conf
+# Start app
+/opt/unbound/sbin/unbound -d -c /opt/unbound/etc/unbound/unbound.conf &
+
+# Wait SIGTERM
+child=$!
+wait "$child"
